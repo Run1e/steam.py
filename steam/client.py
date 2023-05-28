@@ -455,6 +455,9 @@ class Client:
         **kwargs: P.kwargs,
     ) -> None:
         self.clear()
+
+        log.info("Client._login()")
+
         async with nullcontext() if self._aentered else self._tg:
             STATE.set(self._state)
 
@@ -474,6 +477,7 @@ class Client:
                 await asyncio.sleep(sleep)
 
             while not self.is_closed():
+                log.info("Client._login while not self.is_closed()")
                 last_connect = time.monotonic()
 
                 try:
@@ -484,9 +488,11 @@ class Client:
                     continue
 
                 try:
+                    log.info("Starting Client._login event poll loop")
                     while True:
                         await self.ws.poll_event()
                 except exceptions as exc:
+                    log.info("Client._login event poll loop excepted: %s", exc)
                     if isinstance(exc, ConnectionClosed):
                         self._state._connected_cm = exc.cm
                     self.dispatch("disconnect")

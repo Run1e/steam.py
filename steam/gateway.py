@@ -394,6 +394,7 @@ class SteamWebSocket:
             self._dispatch("connect")
 
             async def poll():
+                log.info("Started Gateway.from_client event poller loop")
                 while True:
                     await self.poll_event()
 
@@ -457,8 +458,9 @@ class SteamWebSocket:
             )
 
             self._dispatch("login")
-            log.debug("Logon completed")
+            log.info("Logon completed")
 
+            log.info("Stopping Gateway.from_client event poller loop")
             task.cancel()  # we let Client.connect handle poll_event from here on out
             try:
                 await task  # needed to ensure the task is cancelled and socket._waiting is removed
@@ -621,10 +623,12 @@ class SteamWebSocket:
             if message.type is aiohttp.WSMsgType.BINARY:
                 return self.receive(bytearray(message.data))
             if message.type is aiohttp.WSMsgType.ERROR:
-                log.debug("Received %r", message)
+                log.info("Gateway.poll_event message.type is ERROR")
+                log.info("Received %r", message)
                 raise message.data
             if message.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.CLOSING):
-                log.debug("Received %r", message)
+                log.info("Gateway.poll_event message.type is CLOSED | CLOSE | CLOSING")
+                log.info("Received %r", message)
                 raise WebSocketClosure
             log.debug("Dropped unexpected message type: %r", message)
         except WebSocketClosure:
@@ -716,6 +720,7 @@ class SteamWebSocket:
         return message.header.job_id_source
 
     async def close(self, code: int = 1000) -> None:
+        log.info(f"Gateway.close({code})")
         message = login.CMsgClientLogOff()
         message.header.steam_id = self.id64
         message.header.session_id = self.session_id
