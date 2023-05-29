@@ -243,8 +243,6 @@ class ConnectionState:
         self.handled_licenses.clear()
         self.handled_wallet.clear()
 
-        self.closing = False
-
     @utils.cached_property
     def ws(self) -> SteamWebSocket:
         assert self.client.ws is not None
@@ -1038,24 +1036,18 @@ class ConnectionState:
     @parser
     async def handle_close(self, _: login.CMsgClientLoggedOff | Any = None) -> None:
         log.info("ConnectionState.handle_close()")
-        if self.closing:
-            log.info("self.closing is truthy, returning")
-            return
-        self.closing = True
         if self.ws.closed:  # don't want ConnectionClosed to be raised multiple times
             log.info("self.ws.closed is truthy, returning")
             return
         if not self.ws.socket.closed:
-            log.info("awaiting self.ws.close()")
+            log.info("self.ws.socket.close is truthy, awaiting self.ws.close()")
             await self.ws.close()
         if hasattr(self.ws, "_keep_alive"):
-            log.info("self.ws has _keep_alive attrib, calling .stop() and deleting")
+            log.info("hasattr(self.ws, '_keep_alive')")
             self.ws._keep_alive.stop()
             del self.ws._keep_alive
         log.info("Websocket closed, cannot reconnect.")
         self.ws.closed = True
-        self.closing = False
-        log.info("raising ConnectionClosed")
         raise ConnectionClosed(self.ws.cm)
 
     @parser
