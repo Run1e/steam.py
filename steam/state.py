@@ -1035,6 +1035,7 @@ class ConnectionState:
 
     @parser
     async def handle_close(self, _: login.CMsgClientLoggedOff | Any = None) -> None:
+        quit() # damn
         log.info("ConnectionState.handle_close()")
         if self.ws.closed:  # don't want ConnectionClosed to be raised multiple times
             log.info("self.ws.closed is truthy, returning")
